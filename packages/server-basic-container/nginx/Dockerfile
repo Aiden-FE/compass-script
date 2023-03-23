@@ -1,8 +1,12 @@
-FROM nginx:1.23.3-alpine
+ARG NGINX_PORT_HTTP
+ARG NGINX_PORT_HTTPS
+ARG NGINX_IMAGE_VERSION
+
+FROM nginx:${NGINX_IMAGE_VERSION}
 
 LABEL author=aiden_fe@outlook.com
 
 COPY nginx.conf /etc/nginx/nginx.conf
 
-EXPOSE 80
-EXPOSE 443
+EXPOSE ${NGINX_PORT_HTTP}
+EXPOSE ${NGINX_PORT_HTTPS}

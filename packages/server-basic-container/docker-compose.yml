@@ -1,16 +1,31 @@
 version: "3"
 networks:
   basic_service:
-    external:
-      name: localNet # `docker network create -d bridge --subnet 192.168.0.0/24 --gateway 192.168.0.1 localNet`创建固定网络
+    name: ${LOCAL_NETWORK}
+    external: true
 services:
   nginx:
-    build: "./nginx"
+    build:
+      context: "./nginx"
+      args:
+        NGINX_PORT_HTTP: ${NGINX_PORT_HTTP}
+        NGINX_PORT_HTTPS: ${NGINX_PORT_HTTPS}
     restart: always
     networks:
       - basic_service
     ports:
-      - "80:80"
-      - "443:443"
+      - "${NGINX_PORT_HTTP}:80"
+      - "${NGINX_PORT_HTTPS}:443"
     volumes:
-      - "./volumes-demo/nginx:/html"
+      - "${NGINX_VOLUMES_WWW}:/www"
+  mysql:
+    image: mysql:${MYSQL_IMAGE_VERSION}
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    volumes:
+      - ${MYSQL_VOLUMES_CONF}:/etc/mysql/conf.d
+      - ${MYSQL_VOLUMES_DATA_DIR}:/var/lib/mysql
+    ports:
+      - "${MYSQL_PORT}:3306"

@@ -38,3 +38,5 @@ lerna-debug.log*
 /deploy/redis-data
 .env
 /libs/db/src/docs
+
+volumes-demo

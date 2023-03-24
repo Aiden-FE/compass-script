@@ -17,7 +17,7 @@ docker build -t docker378928518/fe-static:1.0.0-slim packages/front-end-runtime-
 #### Linux基础服务器 容器编排
 
 * 进入 packages/server-basic-container
-* 调整 .env 文件
+* 调整 .env.example 文件为自身所需的配置,并删除.example后缀
 * 启动容器
 
 ```shell

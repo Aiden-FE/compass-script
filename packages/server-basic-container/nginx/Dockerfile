@@ -6,7 +6,7 @@ FROM nginx:${NGINX_IMAGE_VERSION}
 
 LABEL author=aiden_fe@outlook.com
 
-COPY nginx.conf /etc/nginx/nginx.conf
+COPY ./config /etc/nginx
 
 EXPOSE ${NGINX_PORT_HTTP}
 EXPOSE ${NGINX_PORT_HTTPS}

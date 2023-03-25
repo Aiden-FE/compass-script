@@ -8,13 +8,14 @@
 
 #### 前端node运行时容器
 
-
 ```shell
 # build front end runtime container
 docker build -t docker378928518/fe-static:1.0.0-slim packages/front-end-runtime-container/
 ```
 
 #### Linux基础服务器 容器编排
+
+> 一键启动nginx,mysql,redis,mongoDB. 如果你需要mongo-express,请在docker-compose.yml及.env中释放它
 
 * 进入 packages/server-basic-container
 * 调整 .env.example 文件为自身所需的配置,并删除.example后缀

@@ -40,5 +40,5 @@ lerna-debug.log*
 
 www
 .env
-mysql/data
-redis/data
+**/mysql/data
+**/redis/data

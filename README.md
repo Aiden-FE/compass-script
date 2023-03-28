@@ -6,6 +6,11 @@
 
 ### Dockerfile
 
+#### Gitlab runner 前端node环境
+> gitlab runner前端运行环境
+
+[使用文档](./packages/gitlab-runner-node/README.md)
+
 #### 前端node运行时容器
 
 ```shell

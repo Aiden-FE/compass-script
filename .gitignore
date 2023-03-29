@@ -42,3 +42,4 @@ www
 .env
 **/mysql/data
 **/redis/data
+**/postgres/data

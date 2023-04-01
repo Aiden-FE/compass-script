@@ -45,16 +45,16 @@ services:
     ports:
       - ${REDIS_PORT}:6379
 
-  mongo:
-    image: mongo:${MONGO_IMAGE_VERSION}
-    restart: always
-    networks:
-      - local_network
-    ports:
-      - ${MONGO_PORT}:27017
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+#  mongo:
+#    image: mongo:${MONGO_IMAGE_VERSION}
+#    restart: always
+#    networks:
+#      - local_network
+#    ports:
+#      - ${MONGO_PORT}:27017
+#    environment:
+#      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+#      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
 
   postgres:
     image: postgres:${POSTGRES_IMAGE_VERSION}

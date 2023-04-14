@@ -43,3 +43,4 @@ www
 **/mysql/data
 **/redis/data
 **/postgres/data
+**/minio/data

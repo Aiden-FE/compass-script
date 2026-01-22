@@ -20,3 +20,6 @@
 > Linux服务器 基础设施容器编排
 
 [使用文档](./packages/server-basic-container/README.md)
+
+#### ubuntu-manage
+> Ubuntu 服务器管理脚本

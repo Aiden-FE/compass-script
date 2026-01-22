@@ -44,3 +44,5 @@ www
 **/redis/data
 **/postgres/data
 **/minio/data
+
+dist

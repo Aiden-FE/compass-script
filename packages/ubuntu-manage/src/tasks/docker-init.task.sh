@@ -314,6 +314,20 @@ else
     exit 1
 fi
 
+# 创建跨容器网络 localnet（幂等性检查）
+log_info "检查 Docker 网络 'localnet'..."
+if docker network inspect localnet &> /dev/null; then
+    log_info "Docker 网络 'localnet' 已存在，跳过创建"
+else
+    log_info "创建 Docker 网络 'localnet'..."
+    if docker network create localnet; then
+        log_success "Docker 网络 'localnet' 创建成功"
+    else
+        log_error "创建 Docker 网络 'localnet' 失败"
+        exit 1
+    fi
+fi
+
 # 提示用户将当前用户添加到 docker 组（可选）
 CURRENT_USER=${SUDO_USER:-$USER}
 if [ "$CURRENT_USER" != "root" ] && ! groups "$CURRENT_USER" | grep -q "\bdocker\b"; then

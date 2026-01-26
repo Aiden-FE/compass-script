@@ -29,6 +29,29 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+# 检查操作系统是否为 Ubuntu
+check_os() {
+    log_info "检查操作系统环境..."
+    
+    if [ ! -f /etc/os-release ]; then
+        log_error "无法检测操作系统类型，/etc/os-release 文件不存在"
+        exit 1
+    fi
+    
+    # 读取操作系统信息
+    . /etc/os-release
+    
+    # 检查是否为 Ubuntu 或基于 Ubuntu 的系统
+    if [ "$ID" != "ubuntu" ] && [ "$ID_LIKE" != "ubuntu" ] && [[ ! "$ID_LIKE" =~ "ubuntu" ]]; then
+        log_error "此脚本仅支持 Ubuntu 系统"
+        log_error "检测到的操作系统: $ID ($PRETTY_NAME)"
+        log_error "请确保在 Ubuntu 系统上运行此脚本"
+        exit 1
+    fi
+    
+    log_info "操作系统检查通过: $PRETTY_NAME"
+}
+
 # 检查必要的命令
 check_requirements() {
     log_info "检查系统要求..."
@@ -137,6 +160,47 @@ run_init_script() {
     fi
 }
 
+# 执行单个任务脚本
+run_single_task() {
+    local task_name="$1"
+    shift  # 移除 task_name，剩余参数传递给任务脚本
+    
+    log_info "开始执行任务: ${task_name}"
+    
+    local task_script="${INSTALL_DIR}/tasks/${task_name}.task.sh"
+    
+    # 检查任务脚本是否存在
+    if [ ! -f "${task_script}" ]; then
+        log_error "任务脚本不存在: ${task_script}"
+        log_info "可用的任务列表:"
+        if [ -d "${INSTALL_DIR}/tasks" ]; then
+            for task_file in "${INSTALL_DIR}/tasks/"*.task.sh; do
+                if [ -f "${task_file}" ]; then
+                    local name=$(basename "${task_file}" .task.sh)
+                    log_info "  - ${name}"
+                fi
+            done
+        fi
+        exit 1
+    fi
+    
+    # 添加执行权限
+    chmod +x "${task_script}"
+    chmod +x "${INSTALL_DIR}/utils/"*.sh 2>/dev/null || true
+    
+    # 执行任务脚本，传递剩余参数
+    log_info "执行: ${task_script} $@"
+    bash "${task_script}" "$@"
+    
+    local exit_code=$?
+    if [ $exit_code -eq 0 ]; then
+        log_info "任务执行成功: ${task_name}"
+    else
+        log_error "任务执行失败: ${task_name}，退出码: ${exit_code}"
+        exit $exit_code
+    fi
+}
+
 # 清理临时文件
 cleanup() {
     if [ "${KEEP_TEMP}" != "true" ]; then
@@ -154,17 +218,37 @@ main() {
     log_info "Ubuntu 服务器初始化脚本安装程序"
     log_info "========================================="
     
+    # 首先检查操作系统环境
+    check_os
+    
     # 检查是否为 root 用户（某些操作可能需要）
     if [ "$EUID" -ne 0 ]; then
         log_warn "当前不是 root 用户，某些操作可能需要 sudo 权限"
     fi
     
-    # 执行安装流程
-    check_requirements
-    download_archive
-    extract_archive
-    run_init_script "$@"
-    
+    # 如果指定了 --only-run，只执行单个任务
+    if [ -n "${ONLY_RUN_TASK}" ]; then
+        # 检查任务脚本是否存在，如果不存在则先下载解压
+        local task_script="${INSTALL_DIR}/tasks/${ONLY_RUN_TASK}.task.sh"
+        if [ ! -f "${task_script}" ]; then
+            log_info "任务脚本不存在，开始下载和解压..."
+            check_requirements
+            download_archive
+            extract_archive
+        else
+            log_info "使用已存在的任务脚本: ${task_script}"
+        fi
+        
+        # 执行单个任务
+        run_single_task "${ONLY_RUN_TASK}" "$@"
+    else
+        # 执行完整的安装流程
+        check_requirements
+        download_archive
+        extract_archive
+        run_init_script "$@"
+    fi
+
     # 询问是否清理
     if [ "${KEEP_TEMP}" != "true" ] && [ -t 0 ]; then
         echo ""
@@ -197,6 +281,9 @@ Ubuntu 服务器初始化脚本安装程序
     -u, --url URL           指定下载 URL (默认: ${DOWNLOAD_URL})
     -d, --dir DIR           指定安装目录 (默认: ${TEMP_DIR}/src)
     -k, --keep-temp         保留临时文件
+    -r, --region REGION     指定区域 (默认: os) cn: 国内服务器 os: 海外服务器
+    -w, --workspace PATH    指定工作空间路径 (默认: ~/workspace)
+    --only-run TASK_NAME    仅执行指定的任务脚本（跳过其他任务）
 
 环境变量:
     DOWNLOAD_URL            下载地址
@@ -212,7 +299,13 @@ Ubuntu 服务器初始化脚本安装程序
     bash install.sh --url https://example.com/ubuntu-manage.tar.gz
 
     # 传递参数给初始化脚本
-    bash install.sh --skip-docker
+    bash install.sh --region cn --workspace /root/workspace
+
+    # 仅执行 docker 初始化任务
+    bash install.sh --only-run docker-init
+
+    # 仅执行 ufw 初始化任务，并传递参数
+    bash install.sh --only-run ufw-init --region cn
 
     # 保留临时文件用于调试
     KEEP_TEMP=true bash install.sh
@@ -239,8 +332,17 @@ while [[ $# -gt 0 ]]; do
             KEEP_TEMP="true"
             shift
             ;;
+        --only-run)
+            if [ -z "$2" ]; then
+                log_error "--only-run 需要指定任务名称"
+                show_help
+                exit 1
+            fi
+            ONLY_RUN_TASK="$2"
+            shift 2
+            ;;
         *)
-            # 剩余参数传递给初始化脚本
+            # 剩余参数传递给初始化脚本或任务脚本
             break
             ;;
     esac

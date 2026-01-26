@@ -50,10 +50,13 @@ bash install.sh [选项] [初始化脚本参数...]
     -u, --url URL           指定下载 URL
     -d, --dir DIR           指定安装目录
     -k, --keep-temp         保留临时文件
+    -r, --region REGION     指定区域 (默认: os) cn: 国内服务器 os: 海外服务器
+    -w, --workspace PATH    指定工作空间路径 (默认: ~/workspace)
+    --only-run TASK_NAME    仅执行指定的任务脚本（跳过其他任务）
 
 环境变量:
-    DOWNLOAD_URL            下载地址
-    TEMP_DIR                临时目录
+    DOWNLOAD_URL            安装脚本下载地址
+    TEMP_DIR                安装脚本临时目录
     INSTALL_DIR             安装目录
     KEEP_TEMP               保留临时文件 (true/false)
 ```
@@ -61,15 +64,16 @@ bash install.sh [选项] [初始化脚本参数...]
 ### 示例
 
 ```bash
-# 基本安装
+# 使用默认配置安装
 bash install.sh
-
-# 传递参数给初始化脚本（跳过 docker 初始化）
-bash install.sh --skip-docker
-
-# 使用自定义 URL
-DOWNLOAD_URL="https://example.com/ubuntu-manage.tar.gz" bash install.sh
-
+# 指定自定义下载地址
+bash install.sh --url https://example.com/ubuntu-manage.tar.gz
+# 传递参数给初始化脚本
+bash install.sh --region cn --workspace /root/workspace
+# 仅执行 docker 初始化任务
+bash install.sh --only-run docker-init
+# 仅执行 ufw 初始化任务，并传递参数
+bash install.sh --only-run ufw-init --region cn
 # 保留临时文件用于调试
 KEEP_TEMP=true bash install.sh
 ```

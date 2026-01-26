@@ -11,20 +11,6 @@ source "${SCRIPT_DIR}/../utils/parse-args.sh" "$@"
 # 引入日志工具
 source "${SCRIPT_DIR}/../utils/logger.sh"
 
-# 获取 region 参数，可选值为 cn 或 os，默认值为 os
-REGION=$(get_arg "region" "os" "r")
-
-# 验证区域参数值
-if [ "$REGION" != "cn" ] && [ "$REGION" != "os" ]; then
-    log_error "无效的区域参数 '$REGION'"
-    log_error "用法: [--region|-r] [cn|os]"
-    log_error "示例: --region cn  # 国内服务器"
-    log_error "      --region os  # 海外服务器"
-    exit 1
-fi
-
-log_info "初始化区域: $REGION"
-
 # 检查 UFW 是否已安装（幂等性检查）
 if command -v ufw &> /dev/null; then
     UFW_VERSION=$(ufw --version 2>/dev/null | head -n1)
@@ -56,9 +42,9 @@ UFW_STATUS=$(sudo ufw status 2>/dev/null | head -n1)
 if echo "$UFW_STATUS" | grep -q "Status: active"; then
     log_info "UFW 已启用，检查端口配置..."
     
-    # 检查是否已配置所需端口
+    # 检查是否已配置所需端口, 这里不检查 22 端口是因为使用 ufw 后用户有可能改变 ssh 登录端口
     PORTS_CONFIGURED=true
-    for port in 22 80 443; do
+    for port in 80 443; do
         if ! sudo ufw status | grep -q "${port}/tcp.*ALLOW"; then
             PORTS_CONFIGURED=false
             break
@@ -188,3 +174,44 @@ echo ""
 
 log_success "UFW 防火墙安装初始化完成！"
 log_warn "提示: 如需开放其他端口，请使用命令: sudo ufw allow <端口>/tcp"
+echo ""
+log_info "常用 UFW 命令参考:"
+echo ""
+echo "  # 查看防火墙状态"
+echo "    sudo ufw status                    # 查看简要状态"
+echo "    sudo ufw status numbered           # 查看带编号的规则列表"
+echo "    sudo ufw status verbose            # 查看详细状态"
+echo ""
+echo "  # 端口管理"
+echo "    sudo ufw allow <端口>/tcp          # 开放 TCP 端口"
+echo "    sudo ufw allow <端口>/udp          # 开放 UDP 端口"
+echo "    sudo ufw allow <端口>              # 开放 TCP/UDP 端口"
+echo "    sudo ufw deny <端口>/tcp           # 拒绝 TCP 端口"
+echo "    sudo ufw delete allow <端口>/tcp   # 删除允许规则"
+echo ""
+echo "  # 服务管理"
+echo "    sudo ufw allow ssh                 # 允许 SSH 服务"
+echo "    sudo ufw allow http                # 允许 HTTP 服务"
+echo "    sudo ufw allow https               # 允许 HTTPS 服务"
+echo ""
+echo "  # IP 地址管理"
+echo "    sudo ufw allow from <IP地址>       # 允许来自特定 IP 的所有连接"
+echo "    sudo ufw allow from <IP地址> to any port <端口>  # 允许特定 IP 访问特定端口"
+echo "    sudo ufw deny from <IP地址>        # 拒绝来自特定 IP 的连接"
+echo ""
+echo "  # 规则管理"
+echo "    sudo ufw delete <规则编号>         # 根据编号删除规则"
+echo "    sudo ufw delete allow <端口>/tcp   # 删除匹配的规则"
+echo "    sudo ufw reset                     # 重置所有规则（需谨慎）"
+echo ""
+echo "  # 启用/禁用"
+echo "    sudo ufw enable                    # 启用防火墙"
+echo "    sudo ufw disable                   # 禁用防火墙"
+echo "    sudo ufw reload                    # 重新加载规则"
+echo ""
+echo "  # 日志管理"
+echo "    sudo ufw logging on                # 启用日志"
+echo "    sudo ufw logging off               # 禁用日志"
+echo "    sudo ufw logging low|medium|high   # 设置日志级别"
+echo "    sudo tail -f /var/log/ufw.log      # 查看实时日志"
+echo ""

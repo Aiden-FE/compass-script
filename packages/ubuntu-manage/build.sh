@@ -12,7 +12,13 @@ if [ ! -d "$SRC_DIR" ]; then
     exit 1
 fi
 
-# 创建 dist 目录（如果不存在）
+# 清除 dist 目录（如果存在）
+if [ -d "$DIST_DIR" ]; then
+    echo "正在清除 dist 目录..."
+    rm -rf "$DIST_DIR"
+fi
+
+# 创建 dist 目录
 mkdir -p "$DIST_DIR"
 
 # 进入 src 的父目录，以便打包时保持目录结构
@@ -29,4 +35,14 @@ if [ $? -eq 0 ]; then
 else
     echo "打包失败"
     exit 1
+fi
+
+# 复制 install.sh 到 dist 目录
+if [ -f "${SCRIPT_DIR}/install.sh" ]; then
+    echo "正在复制 install.sh 到 dist 目录..."
+    cp "${SCRIPT_DIR}/install.sh" "${DIST_DIR}/install.sh"
+    chmod +x "${DIST_DIR}/install.sh"
+    echo "复制成功: ${DIST_DIR}/install.sh"
+else
+    echo "警告: install.sh 文件不存在，跳过复制"
 fi

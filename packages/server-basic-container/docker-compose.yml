@@ -12,8 +12,18 @@ services:
 #      - ${NGINX_PORT_HTTP}:80
 #      - ${NGINX_PORT_HTTPS}:443
 #    volumes:
-#      - ${NGINX_VOLUMES_CONFIG}:/etc/nginx
-#      - ${NGINX_VOLUMES_WEBSITE}:/www
+#      # 主配置文件（全局和 http 块）
+#      - ${NGINX_VOLUMES_CONFIG}:/etc/nginx/nginx.conf
+#      # Server 配置文件目录（包含所有 server 块配置，如 default.conf）
+#      - ${NGINX_VOLUMES_CONF_D}:/etc/nginx/conf.d
+#      # 日志目录
+#      - ${NGINX_VOLUMES_LOGS}:/var/log/nginx
+#      # 数据目录
+#      - ${NGINX_VOLUMES_DATA}:/var/lib/nginx
+#      # 静态资源目录
+#      - ${NGINX_VOLUMES_WEBSITE}:/usr/share/nginx/html
+#      # SSL 证书目录
+#      - ${NGINX_VOLUMES_SSL}:/etc/nginx/ssl
 
 #  mysql:
 #    image: mysql:${MYSQL_IMAGE_VERSION}

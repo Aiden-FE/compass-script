@@ -14,6 +14,20 @@ source "${SCRIPT_DIR}/../utils/parse-args.sh" "$@"
 # 引入日志工具
 source "${SCRIPT_DIR}/../utils/logger.sh"
 
+# 获取 region 参数，可选值为 cn 或 os，默认值为 os
+REGION=$(get_arg "region" "os" "r")
+
+# 验证区域参数值
+if [ "$REGION" != "cn" ] && [ "$REGION" != "os" ]; then
+    log_error "无效的区域参数 '$REGION'"
+    log_error "用法: [--region|-r] [cn|os]"
+    log_error "示例: --region cn  # 国内服务器"
+    log_error "      --region os  # 海外服务器"
+    exit 1
+fi
+
+log_info "初始化区域: $REGION"
+
 # 获取 workspace 路径参数，默认为 ~/workspace
 WORKSPACE_PATH=$(get_arg "workspace" "$HOME/workspace" "w")
 
@@ -52,12 +66,37 @@ cd "$NOFX_INSTALL_DIR" || {
 }
 
 log_info "开始安装 nofx..."
-# 安装或更新 nofx
-curl -fsSL https://raw.githubusercontent.com/NoFxAiOS/nofx/main/install.sh | bash
 
-if [ $? -eq 0 ]; then
-    log_success "nofx 安装完成"
+# 定义原始 GitHub URL
+ORIGINAL_URL="https://raw.githubusercontent.com/NoFxAiOS/nofx/main/install.sh"
+# 定义代理 URL（用于国内服务器）
+PROXY_URL="https://ghfast.top/https://raw.githubusercontent.com/NoFxAiOS/nofx/main/install.sh"
+
+# 根据区域选择安装策略
+# 设置 curl 超时时间为 30 秒，避免无限制等待
+CURL_TIMEOUT=30
+
+if [ "$REGION" = "cn" ]; then
+    # 国内服务器：优先尝试原始地址，失败后使用代理地址
+    log_info "尝试使用原始 GitHub URL（超时限制：${CURL_TIMEOUT}秒）..."
+    if curl -fsSL --max-time "$CURL_TIMEOUT" "$ORIGINAL_URL" | bash; then
+        log_success "nofx 安装完成（使用原始地址）"
+    else
+        log_warn "原始地址访问失败，尝试使用 GitHub 镜像代理（超时限制：${CURL_TIMEOUT}秒）..."
+        if curl -fsSL --max-time "$CURL_TIMEOUT" "$PROXY_URL" | bash; then
+            log_success "nofx 安装完成（使用镜像代理）"
+        else
+            log_error "nofx 安装失败（原始地址和镜像代理均失败）"
+            exit 1
+        fi
+    fi
 else
-    log_error "nofx 安装失败"
-    exit 1
+    # 海外服务器：直接使用原始 GitHub URL
+    log_info "使用原始 GitHub URL（海外服务器，超时限制：${CURL_TIMEOUT}秒）..."
+    if curl -fsSL --max-time "$CURL_TIMEOUT" "$ORIGINAL_URL" | bash; then
+        log_success "nofx 安装完成"
+    else
+        log_error "nofx 安装失败"
+        exit 1
+    fi
 fi
